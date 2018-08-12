@@ -1,5 +1,6 @@
 # Change the path to load gym lib
 import sys
+import os
 sys.path.append('./gym')
 import gym
 import numpy as np
@@ -9,13 +10,21 @@ from random import Random
 env = gym.make('CartPole-v0')
 rand = Random()
 
+# Set debug mode
+# print observation, done conditions, train verbose, play verbose 
+os.environ['DEBUG'] = '0011'
+
+
 X_MAX, X_DOT_MAX, THETA_MAX, THETA_DOT_MAX = env.observation_space.high
 X_MIN, X_DOT_MIN, THETA_MIN, THETA_DOT_MIN = env.observation_space.low
 
-X_SPACE_SIZE = 3
-X_DOT_SPACE_SIZE = 3
-THETA_SPACE_SIZE = 5
-THETA_DOT_SPACE_SIZE = 3
+print(env.observation_space.high)
+print(env.observation_space.low)
+
+X_SPACE_SIZE = 2
+X_DOT_SPACE_SIZE = 2
+THETA_SPACE_SIZE = 2
+THETA_DOT_SPACE_SIZE = 2
 
 LEARNING_RATE = 0.5
 GAMMA = 0.9
@@ -44,28 +53,20 @@ def updateVtable(newState, lastState, action, reward):
 
 def getState(observation):
   # Get state of x
-  x_state = max(min(observation[0], X_MAX), X_MIN)
-  x_state = np.floor((x_state+X_MAX)/(2*X_MAX/X_SPACE_SIZE)).astype(int)
-  if x_state >= X_SPACE_SIZE: x_state = X_SPACE_SIZE - 1
-  # if observation[0] < 0: x_state = 0
-  # else: x_state = 1
+  if observation[0] < 0: x_state = 0
+  else: x_state = 1
 
   # Get state of x dot
-  if observation[1] < -0.5: x_dot_state = 0
-  elif observation[1] < 0.5: x_dot_state = 1
-  else: x_dot_state = 2
+  if observation[1] < 0: x_dot_state = 0
+  else: x_dot_state = 1
 
   # Get state of theta
-  theta_state = max(min(observation[2], THETA_MAX), THETA_MIN)
-  theta_state = np.floor((theta_state+THETA_MAX)/(2*THETA_MAX/THETA_SPACE_SIZE)).astype(int)
-  if theta_state >= THETA_SPACE_SIZE: theta_state = THETA_SPACE_SIZE - 1
-  # if observation[2] < 0: theta_state = 0
-  # else: theta_state = 1
+  if observation[2] < 0: theta_state = 0
+  else: theta_state = 1
 
   # Get state of theta dot
-  if observation[3] < -0.5: theta_dot_state = 0
-  elif observation[3] < 0.5: theta_dot_state = 1
-  else: theta_dot_state = 2
+  if observation[3] < 0: theta_dot_state = 0
+  else: theta_dot_state = 1
 
   return (x_state, x_dot_state, theta_state, theta_dot_state)
 
@@ -88,12 +89,20 @@ def train(max_episodes, max_timestep):
       action = getAction(old_state)
       observation, reward, done, info = env.step(action)
       new_state = getState(observation)
+      if done: reward = 0
       updateVtable(new_state, old_state, action, reward)
-      # print(v_table)
+      if os.environ['DEBUG'][0] == '1':
+        print(observation)
       if done and not end_episode:
+        if os.environ['DEBUG'][1] == '1':
+          print()
+          print('State is beyond threshold')
+          print('x: %.4f, x_threshold: %.4f' % (observation[0], X_MAX / 2.0))
+          print('theta: %.4f, thetathreshold: %.4f' % (observation[2], THETA_MAX / 2.0))
         end_episode = True
-        print("Episode {}".format(i_episode))
-        print("Episode finished after {} timesteps".format(t+1))
+        if os.environ['DEBUG'][2] == '1':
+          print("Episode {}".format(i_episode))
+          print("Episode finished after {} timesteps".format(t+1))
         break
 
 def greedy(state):
@@ -112,7 +121,8 @@ def play():
     action = greedy(state)
     observation, reward, done, info = env.step(action)
     if done:
-      print("Failed after {} timesteps".format(timestep))
+      if os.environ['DEBUG'][3] == '1':
+        print("Failed after {} timesteps".format(timestep))
       timestep = 0
       observation = env.reset()
 
