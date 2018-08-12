@@ -12,7 +12,7 @@ rand = Random()
 
 # Set debug mode
 # print observation, done conditions, train verbose, play verbose 
-os.environ['DEBUG'] = '0011'
+DEBUG_FLAG = '0011'
 
 
 X_MAX, X_DOT_MAX, THETA_MAX, THETA_DOT_MAX = env.observation_space.high
@@ -91,16 +91,16 @@ def train(max_episodes, max_timestep):
       new_state = getState(observation)
       if done: reward = 0
       updateVtable(new_state, old_state, action, reward)
-      if os.environ['DEBUG'][0] == '1':
+      if DEBUG_FLAG[0] == '1':
         print(observation)
       if done and not end_episode:
-        if os.environ['DEBUG'][1] == '1':
+        if DEBUG_FLAG[1] == '1':
           print()
           print('State is beyond threshold')
           print('x: %.4f, x_threshold: %.4f' % (observation[0], X_MAX / 2.0))
           print('theta: %.4f, thetathreshold: %.4f' % (observation[2], THETA_MAX / 2.0))
         end_episode = True
-        if os.environ['DEBUG'][2] == '1':
+        if DEBUG_FLAG[2] == '1':
           print("Episode {}".format(i_episode))
           print("Episode finished after {} timesteps".format(t+1))
         break
@@ -121,7 +121,7 @@ def play():
     action = greedy(state)
     observation, reward, done, info = env.step(action)
     if done:
-      if os.environ['DEBUG'][3] == '1':
+      if DEBUG_FLAG[3] == '1':
         print("Failed after {} timesteps".format(timestep))
       timestep = 0
       observation = env.reset()
