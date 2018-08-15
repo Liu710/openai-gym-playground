@@ -6,12 +6,14 @@ import gym
 import numpy as np
 import random
 import math
+import keyboard
 from random import Random
 env = gym.make('CartPole-v0')
 rand = Random()
 
 # Set debug mode
 # print observation, done conditions, train verbose, play verbose 
+# DEBUG_FLAG = '1000'
 DEBUG_FLAG = '0011'
 
 
@@ -24,12 +26,12 @@ print(env.observation_space.low)
 X_SPACE_SIZE = 2
 X_DOT_SPACE_SIZE = 2
 THETA_SPACE_SIZE = 2
-THETA_DOT_SPACE_SIZE = 2
+THETA_DOT_SPACE_SIZE = 4
 
 LEARNING_RATE = 0.5
 GAMMA = 0.9
 EPSILON = 0.6
-TRAIN_EPISODES = 300
+TRAIN_EPISODES = 200
 MAX_TIMESTEPS = 200
 
 v_table = [[[[ 2*[0.0] 
@@ -65,8 +67,10 @@ def getState(observation):
   else: theta_state = 1
 
   # Get state of theta dot
-  if observation[3] < 0: theta_dot_state = 0
-  else: theta_dot_state = 1
+  if observation[3] < -1.0: theta_dot_state = 0
+  elif observation[3] < 0: theta_dot_state = 1
+  elif observation[3] < 1.0: theta_dot_state = 2
+  else: theta_dot_state = 3
 
   return (x_state, x_dot_state, theta_state, theta_dot_state)
 
@@ -93,6 +97,7 @@ def train(max_episodes, max_timestep):
       updateVtable(new_state, old_state, action, reward)
       if DEBUG_FLAG[0] == '1':
         print(observation)
+        if done: print('done')
       if done and not end_episode:
         if DEBUG_FLAG[1] == '1':
           print()
@@ -115,6 +120,8 @@ def play():
   observation = env.reset()
   timestep = 0
   while True:
+    if keyboard.is_pressed('x'):
+      exit()
     timestep += 1
     env.render()
     state = getState(observation)
